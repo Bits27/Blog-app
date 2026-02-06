@@ -49,7 +49,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
   try {
     const created = await dispatch(
-      createBlog({title, content, category, username, user_id, image_url})
+      createBlog({title, content, category, username, user_id, image_url
+})
     ).unwrap();
     navigate(`/blogs/${created.id}`);
   } catch {

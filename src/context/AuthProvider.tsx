@@ -9,8 +9,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthState["session"]>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let mounted = true;
+  useEffect(() => {let mounted = true;
 
     supabase.auth.getSession().then(({ data, error }) => {
       if (!mounted) return;
@@ -22,6 +21,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data.session?.user ?? null);
       }
       setLoading(false);
+    
+    
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -29,11 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(nextSession);
         setUser(nextSession?.user ?? null);
         setLoading(false);
+
       }
     );
 
-    return () => {
-      mounted = false;
+    return () => { mounted = false;
       authListener.subscription.unsubscribe();
     };
   }, []);

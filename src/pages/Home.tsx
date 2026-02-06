@@ -96,36 +96,11 @@ const { blogs, selectedCategories, page, pageSize, total } = useSelector(
       </div>
         
       <div className="toolbar">
-        <button
-          className={selectedCategories.length === 0 ? "active" : ""}
-          onClick={() => dispatch(clearCategories())}
-        >
-          All
-        </button>
-        <button
-          className={selectedCategories.includes("school") ? "active" : ""}
-          onClick={() => dispatch(toggleCategory("school"))}
-        >
-          School
-        </button>
-        <button
-          className={selectedCategories.includes("travel") ? "active" : ""}
-          onClick={() => dispatch(toggleCategory("travel"))}
-        >
-          Travel
-        </button>
-        <button
-          className={selectedCategories.includes("food") ? "active" : ""}
-          onClick={() => dispatch(toggleCategory("food"))}
-        >
-          Food
-        </button>
-        <button
-          className={selectedCategories.includes("others") ? "active" : ""}
-          onClick={() => dispatch(toggleCategory("others"))}
-        >
-          Others
-        </button>
+        <button onClick={() => dispatch(clearCategories())}>All</button>
+        <button onClick={() => dispatch(toggleCategory("school"))}>School</button>
+        <button onClick={() => dispatch(toggleCategory("travel"))}>Travel</button>
+        <button onClick={() => dispatch(toggleCategory("food"))}>Food</button>
+        <button onClick={() => dispatch(toggleCategory("others"))}>Others</button>
 
       </div>
 

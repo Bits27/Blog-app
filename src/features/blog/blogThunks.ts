@@ -1,9 +1,15 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { supabase } from "../../lib/supabase";
-import type { Blog,Category } from "../../types/blog"
+import type { Blog, Category } from "../../types/blog";
 
-
-interface CreateBlogPayload {title: string; content: string;category: Category; username: string; user_id: string; image_url?: string | null;}
+interface CreateBlogPayload {
+  title: string;
+  content: string;
+  category: Category;
+  username: string;
+  user_id: string;
+  image_url?: string | null;
+}
 
 export const createBlog = createAsyncThunk<Blog, CreateBlogPayload>(
   "blogs/createBlog",
@@ -17,7 +23,7 @@ export const createBlog = createAsyncThunk<Blog, CreateBlogPayload>(
     if (error) return rejectWithValue(error.message);
 
     return data;
-  }
+  },
 );
 
 export const fetchBlogs = createAsyncThunk<
@@ -43,24 +49,33 @@ export const fetchBlogs = createAsyncThunk<
     if (error) return rejectWithValue(error.message);
 
     return { items: data ?? [], total: count ?? 0 };
-  }
+  },
 );
 
 export const updateBlog = createAsyncThunk<
   Blog,
-  { id: string; title: string; content: string; category: Category; image_url?: string | null }
->("blogs/updateBlog", async ({ id, title, content, category, image_url }, { rejectWithValue }) => {
-  const { data, error } = await supabase
-    .from("blogs")
-    .update({ title, content, category, image_url })
-    .eq("id", id)
-    .select()
-    .single();
+  {
+    id: string;
+    title: string;
+    content: string;
+    category: Category;
+    image_url?: string | null;
+  }
+>(
+  "blogs/updateBlog",
+  async ({ id, title, content, category, image_url }, { rejectWithValue }) => {
+    const { data, error } = await supabase
+      .from("blogs")
+      .update({ title, content, category, image_url })
+      .eq("id", id)
+      .select()
+      .single();
 
-  if (error) return rejectWithValue(error.message);
+    if (error) return rejectWithValue(error.message);
 
-  return data;
-});
+    return data;
+  },
+);
 
 export const deleteBlog = createAsyncThunk<string, { id: string }>(
   "blogs/deleteBlog",
@@ -70,5 +85,5 @@ export const deleteBlog = createAsyncThunk<string, { id: string }>(
     if (error) return rejectWithValue(error.message);
 
     return id;
-  }
+  },
 );

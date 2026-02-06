@@ -14,7 +14,8 @@ function CommentList({ comments }: { comments: Comment[] }) {
   return (
     <div className="comment-list">
       {comments.map((comment) => (
-        <div className="comment-item" key={comment.id}>
+        
+<div className="comment-item" key={comment.id}>
           <p>{comment.content}</p>
           <div className="comment-meta">
             <div className="meta">
