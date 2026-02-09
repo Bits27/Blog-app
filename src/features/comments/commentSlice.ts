@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { Comment } from "./commentTypes";
-import { fetchComments, createComment, deleteComment } from "./commentThunks";
+import { fetchComments, createComment, deleteComment, updateComment } from "./commentThunks";
 
 interface CommentState {
   items: Comment[];
@@ -41,6 +41,13 @@ const commentSlice = createSlice({
       })
       .addCase(deleteComment.fulfilled, (state, action: PayloadAction<string>) => {
         state.items = state.items.filter((comment) => comment.id !== action.payload);
+      })
+      .addCase(updateComment.fulfilled, (state, action: PayloadAction<Comment>) => {
+        const updated = action.payload;
+        const index = state.items.findIndex((comment) => comment.id === updated.id);
+        if (index !== -1) {
+          state.items[index] = updated;
+        }
       });
   }
 });

@@ -39,3 +39,23 @@ export const deleteComment = createAsyncThunk<string, { id: string }>(
     return id;
   }
 );
+
+export const updateComment = createAsyncThunk<
+  Comment,
+  { id: string; content: string; image_url?: string | null }
+>("comments/updateComment", async ({ id, content, image_url }, { rejectWithValue }) => {
+  const updates: { content: string; image_url?: string | null } = { content };
+  if (typeof image_url !== "undefined") {
+    updates.image_url = image_url;
+  }
+  (updates as { updated_at?: string }).updated_at = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("comments")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) return rejectWithValue(error.message);
+  return data;
+});
