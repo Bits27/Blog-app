@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import type { Blog } from "../types/blog";
 import { useAuth } from "../context/useAuth";
@@ -11,6 +11,7 @@ import { fetchComments, createComment } from "../features/comments/commentThunks
 import CommentList from "../components/blog/CommentList";
 import { uploadCommentImage } from "../lib/storage";
 import { getMyUserId, getMyUsername } from "../lib/profile";
+import { NavLinkPill, Topbar } from "../components/common/Topbar";
 
 function BlogDetail() {
   const params = useParams();
@@ -18,8 +19,6 @@ function BlogDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const dispatch = useDispatch<AppDispatch>();
-  const navClass = ({ isActive }: { isActive: boolean }) =>
-    `link-pill${isActive ? " active" : ""}`;
   const { items: comments, loading: commentsLoading } = useSelector(
     (state: RootState) => state.comments
   );
@@ -69,16 +68,11 @@ function BlogDetail() {
 
   return (
     <div className="app-shell">
-      <div className="topbar">
-        <div className="brand">Inkframe</div>
-        <div className="nav-links">
-          <NavLink className={navClass} to="/">Home</NavLink>
-          <NavLink className={navClass} to="/create">Create Blog</NavLink>
-          {user ? (
-            <NavLink className={navClass} to={`/profile/${user.id}`}>Profile</NavLink>
-          ) : null}
-        </div>
-      </div>
+      <Topbar>
+        <NavLinkPill to="/">Home</NavLinkPill>
+        <NavLinkPill to="/create">Create Blog</NavLinkPill>
+        {user ? <NavLinkPill to={`/profile/${user.id}`}>Profile</NavLinkPill> : null}
+      </Topbar>
 
       <div className="card content-width">
       {blog.image_url ? (

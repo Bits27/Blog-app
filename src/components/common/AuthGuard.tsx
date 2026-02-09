@@ -6,7 +6,7 @@ function AuthGuard({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) return <p>Checking session...</p>;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;//prevents user from going back to protected pages
 
   return children;
 }

@@ -1,7 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { supabase } from "../../lib/supabase";
 import type { Blog, Category } from "../../types/blog";
-
 interface CreateBlogPayload {
   title: string;
   content: string;

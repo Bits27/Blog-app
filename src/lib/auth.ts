@@ -17,7 +17,7 @@ export async function signUp(email: string, password: string, username: string) 
     return { user: null, error: new Error("Username already taken") };
   }
 
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({ email, password });//creates user 
 
   if (error) return { user: null, error };
 
@@ -26,7 +26,7 @@ export async function signUp(email: string, password: string, username: string) 
 
   const { error: profileError } = await supabase
     .from("profiles")
-    .insert({ id: user.id, username: normalizedUsername });
+    .insert({ id: user.id, username: normalizedUsername }); //creates user in "profiles"
 
   if (profileError) return { user: null, error: profileError };
 

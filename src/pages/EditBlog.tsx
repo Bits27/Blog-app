@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, NavLink, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/useAuth";
 import type { Blog, Category } from "../types/blog";
@@ -7,14 +7,13 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../app/store";
 import { updateBlog } from "../features/blog/blogThunks";
 import { uploadBlogImage } from "../lib/storage";
+import { NavLinkPill, Topbar } from "../components/common/Topbar";
 
 function EditBlog() {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useAuth();
-  const navClass = ({ isActive }: { isActive: boolean }) =>
-    `link-pill${isActive ? " active" : ""}`;
 
   const [loading, setLoading] = useState(!id ? false : true);
   const [errorMsg, setErrorMsg] = useState("");
@@ -24,7 +23,9 @@ function EditBlog() {
   const [content, setContent] = useState("");
   const [category, setCategory] = useState<Category | "">("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageAction, setImageAction] = useState<"keep" | "remove" | "replace">("keep");
   const [saving, setSaving] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -64,25 +65,36 @@ function EditBlog() {
     if (imageFile && user?.id) {
       try {
         setSaving(true);
+        if (imageAction === "replace") {
         image_url = await uploadBlogImage(imageFile, user.id);
+        }
       } catch {
         setErrorMsg("Image upload failed. Please try again.");
         setSaving(false);
         return;
       }
     }
+    if (imageAction === "remove") {
+      image_url = null;
+    }
 
-    const result = await dispatch(
-      updateBlog({
-        id: blog.id,
-        title,
-        content,
-        category,
-        image_url,
-      })
-    ).unwrap();
+    try {
+      const result = await dispatch(
+        updateBlog({
+          id: blog.id,
+          title,
+          content,
+          category,
+          image_url,
+        })
+      ).unwrap();
 
-    navigate(`/blogs/${result.id}`);
+      navigate(`/blogs/${result.id}`);
+    } catch {
+      setErrorMsg("Blog update failed. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!id) return <p>Blog not found</p>;
@@ -96,17 +108,12 @@ function EditBlog() {
 
   return (
     <div className="app-shell">
-      <div className="topbar">
-        <div className="brand">Inkframe</div>
-        <div className="nav-links">
-          <NavLink className={navClass} to="/">Home</NavLink>
-          <NavLink className={navClass} to="/create">Create Blog</NavLink>
-          {user ? (
-            <NavLink className={navClass} to={`/profile/${user.id}`}>Profile</NavLink>
-          ) : null}
-          <Link className="link-pill" to={`/blogs/${blog.id}`}>Back to Blog</Link>
-        </div>
-      </div>
+      <Topbar>
+        <NavLinkPill to="/">Home</NavLinkPill>
+        <NavLinkPill to="/create">Create Blog</NavLinkPill>
+        {user ? <NavLinkPill to={`/profile/${user.id}`}>Profile</NavLinkPill> : null}
+        <Link className="link-pill" to={`/blogs/${blog.id}`}>Back to Blog</Link>
+      </Topbar>
 
       <h1 className="section-title">Edit Blog</h1>
 
@@ -129,7 +136,7 @@ function EditBlog() {
         </div>
 
         <div className="radio-group">
-          <label>
+          <label className={category === "school" ? "radio-option active" : "radio-option"}>
             <input
               type="radio"
               name="category"
@@ -140,7 +147,7 @@ function EditBlog() {
             School
           </label>
 
-          <label>
+          <label className={category === "travel" ? "radio-option active" : "radio-option"}>
             <input
               type="radio"
               name="category"
@@ -151,7 +158,7 @@ function EditBlog() {
             Travel
           </label>
 
-          <label>
+          <label className={category === "food" ? "radio-option active" : "radio-option"}>
             <input
               type="radio"
               name="category"
@@ -162,7 +169,7 @@ function EditBlog() {
             Food
           </label>
 
-          <label>
+          <label className={category === "others" ? "radio-option active" : "radio-option"}>
             <input
               type="radio"
               name="category"
@@ -175,17 +182,56 @@ function EditBlog() {
         </div>
 
         {blog.image_url ? (
-          <img className="blog-image blog-image--small" src={blog.image_url} alt={blog.title} />
+          imageAction !== "remove" ? (
+            <img className="blog-image blog-image--small" src={blog.image_url} alt={blog.title} />
+          ) : (
+            <div className="meta">Current image will be removed.</div>
+          )
+        ) : null}
+        {blog.image_url ? (
+          <button
+            className="button secondary"
+            type="button"
+            onClick={() => {
+              setImageAction((value) => (value === "remove" ? "keep" : "remove"));
+              setImageFile(null);
+              if (imageInputRef.current) {
+                imageInputRef.current.value = "";
+              }
+            }}
+          >
+            {imageAction === "remove" ? "Undo remove" : "Remove current image"}
+          </button>
         ) : null}
         <label className="image-row">
-          Replace image
+          {blog.image_url && imageAction !== "remove" ? "Replace image" : "Add image"}
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+            ref={imageInputRef}
+            onChange={(e) => {
+              setImageFile(e.target.files?.[0] ?? null);
+              setImageAction("replace");
+            }}
           />
         </label>
-        {imageFile ? <div className="meta">Selected: {imageFile.name}</div> : null}
+        {imageFile ? (
+          <div className="meta">
+            Selected: {imageFile.name}{" "}
+            <button
+              className="button secondary"
+              type="button"
+              onClick={() => {
+                setImageFile(null);
+                if (imageInputRef.current) {
+                  imageInputRef.current.value = "";
+                }
+              }}
+            >
+              Remove
+            </button>
+          </div>
+        ) : null}
 
         <button className="submit-button" type="submit" disabled={saving}>
           {saving ? "Saving..." : "Save"}

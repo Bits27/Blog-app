@@ -1,22 +1,21 @@
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { createBlog } from "../features/blog/blogThunks"
 import type { AppDispatch } from "../app/store";
 import type { Category } from "../types/blog"
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { getMyUsername, getMyUserId } from "../lib/profile";
 import { uploadBlogImage } from "../lib/storage";
+import { NavLinkPill, Topbar } from "../components/common/Topbar";
 
 function CreateBlog() {
 const dispatch = useDispatch<AppDispatch>()
-const navClass = ({ isActive }: { isActive: boolean }) =>
-  `link-pill${isActive ? " active" : ""}`;
-
 const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState<Category | "">("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [uploading, setUploading] = useState(false);
 const navigate = useNavigate();
@@ -55,13 +54,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     navigate(`/blogs/${created.id}`);
   } catch {
     setErrorMsg("Blog creation failed. Please try again.");
+  } finally {
+    setUploading(false);
   }
 
-  setTitle("");
-  setContent("");
-  setCategory("");
-  setImageFile(null);
-  setUploading(false);
 };
 
 
@@ -69,13 +65,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
   return (
     <div className="app-shell">
-      <div className="topbar">
-        <div className="brand">Inkframe</div>
-        <div className="nav-links">
-          <NavLink className={navClass} to="/">Home</NavLink>
-          <NavLink className={navClass} to="/create">Create Blog</NavLink>
-        </div>
-      </div>
+      <Topbar>
+        <NavLinkPill to="/">Home</NavLinkPill>
+        <NavLinkPill to="/create">Create Blog</NavLinkPill>
+      </Topbar>
 
       <h1 className="section-title">Create Blog</h1>
 
@@ -96,35 +89,52 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           <input
             type="file"
             accept="image/*"
+            ref={imageInputRef}
             onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
           />
         </label>
-        {imageFile ? <div className="meta">Selected: {imageFile.name}</div> : null}
+        {imageFile ? (
+          <div className="meta">
+            Selected: {imageFile.name}{" "}
+            <button
+              className="button secondary"
+              type="button"
+              onClick={() => {
+                setImageFile(null);
+                if (imageInputRef.current) {
+                  imageInputRef.current.value = "";
+                }
+              }}
+            >
+              Remove
+            </button>
+          </div>
+        ) : null}
 
         <p className="meta">Choose category for your blog</p>
         <div className="radio-group">
-          <label>
+          <label className={category === "school" ? "radio-option active" : "radio-option"}>
             <input type="radio" name="category" value="school" checked={category === "school"}
               onChange={e => setCategory(e.target.value as Category)}
             />
             School
           </label>
 
-          <label>
+          <label className={category === "travel" ? "radio-option active" : "radio-option"}>
             <input type="radio" name="category" value="travel" checked={category === "travel"}
               onChange={e => setCategory(e.target.value as Category)}
             />
             Travel
           </label>
 
-          <label>
+          <label className={category === "food" ? "radio-option active" : "radio-option"}>
             <input type="radio" name="category" value="food" checked={category === "food"}
               onChange={e => setCategory(e.target.value as Category)}
             />
             Food
           </label>
 
-          <label>
+          <label className={category === "others" ? "radio-option active" : "radio-option"}>
             <input type="radio" name="category" value="others" checked={category === "others"} 
               onChange={e => setCategory(e.target.value as Category)}
             />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/useAuth";
 import type { Blog } from "../types/blog";
@@ -7,6 +7,7 @@ import { deleteBlog } from "../features/blog/blogThunks";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../app/store";
 import { signOut } from "../lib/auth";
+import { NavLinkPill, Topbar } from "../components/common/Topbar";
 
 type ProfileData = {
   id: string;
@@ -19,8 +20,6 @@ function Profile() {
   const { user } = useAuth();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const navClass = ({ isActive }: { isActive: boolean }) =>
-    `link-pill${isActive ? " active" : ""}`;
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -72,10 +71,18 @@ function Profile() {
     setDeleting(true);
     setErrorMsg("");
 
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const authUserId = authData.user?.id;
+    if (authError || !authUserId || authUserId !== profile.id) {
+      setErrorMsg(authError?.message ?? "Not authorized to delete this profile.");
+      setDeleting(false);
+      return;
+    }
+
     const { error: blogsError } = await supabase
       .from("blogs")
       .delete()
-      .eq("user_id", profile.id);
+      .eq("user_id", authUserId);
 
     if (blogsError) {
       setErrorMsg(blogsError.message);
@@ -83,13 +90,36 @@ function Profile() {
       return;
     }
 
-    const { error: profileError } = await supabase
+    const { data: deletedProfiles, error: profileError } = await supabase
       .from("profiles")
       .delete()
-      .eq("id", profile.id);
+      .eq("id", authUserId)
+      .select("id");
 
     if (profileError) {
       setErrorMsg(profileError.message);
+      setDeleting(false);
+      return;
+    }
+    if (!deletedProfiles || deletedProfiles.length === 0) {
+      setErrorMsg("Profile delete was blocked. Check Supabase RLS policies for profiles.");
+      setDeleting(false);
+      return;
+    }
+
+    const { data: verifyProfile, error: verifyError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", authUserId)
+      .maybeSingle();
+
+    if (verifyError) {
+      setErrorMsg(verifyError.message);
+      setDeleting(false);
+      return;
+    }
+    if (verifyProfile) {
+      setErrorMsg("Profile still exists after delete. Check RLS and foreign key constraints.");
       setDeleting(false);
       return;
     }
@@ -100,13 +130,10 @@ function Profile() {
 
   return (
     <div className="app-shell">
-      <div className="topbar">
-        <div className="brand">Inkframe</div>
-        <div className="nav-links">
-          <NavLink className={navClass} to="/">Home</NavLink>
-          <NavLink className={navClass} to={`/profile/${profile.id}`}>Profile</NavLink>
-        </div>
-      </div>
+      <Topbar>
+        <NavLinkPill to="/">Home</NavLinkPill>
+        <NavLinkPill to={`/profile/${profile.id}`}>Profile</NavLinkPill>
+      </Topbar>
 
       <div className="profile-header">
         {isOwner ? <div className="profile-owner">Your profile</div> : null}

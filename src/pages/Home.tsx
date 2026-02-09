@@ -1,59 +1,57 @@
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../app/store";
 import { fetchBlogs } from "../features/blog/blogThunks";
-import { toggleCategory, clearCategories, setPage} from "../features/blog/blogSlice";
+import { toggleCategory, clearCategories, setPage } from "../features/blog/blogSlice";
 import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { getMyUsername } from "../lib/profile";
+import { NavLinkPill, Topbar } from "../components/common/Topbar";
+
+const QUOTES = [
+  "Small steps done daily become big changes.",
+  "Discipline beats motivation on the days you don’t feel like it.",
+  "Progress, not perfection.",
+  "You don’t have to be fearless—just keep going.",
+  "Consistency is a quiet kind of power.",
+  "Your future self is watching you choose.",
+  "Start where you are. Use what you have. Do what you can.",
+  "Energy follows action.",
+  "Make it simple. Make it clear. Make it happen.",
+  "You are capable of more than you think."
+];
 
 
 
 function Home() {
-const dispatch = useDispatch<AppDispatch>();
-const { user } = useAuth();
-const navClass = ({ isActive }: { isActive: boolean }) =>
-  `link-pill${isActive ? " active" : ""}`;
-const [myUsername, setMyUsername] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useAuth();
+  const [myUsername, setMyUsername] = useState<string | null>(null);
 
-const { blogs, selectedCategories, page, pageSize, total } = useSelector(
+  const { blogs, selectedCategories, page, pageSize, total } = useSelector(
     (state: RootState) => state.blogs
   );
 
-
+  //decide which blogs to show 
   useEffect(()=>{
     dispatch(fetchBlogs({ page, pageSize, categories: selectedCategories }))
 }, [dispatch, page, pageSize, selectedCategories])
 
-  useEffect(() => {
-    if (!user) return;
+  useEffect(() => {//displays the name on top
+    
     getMyUsername().then((name) => setMyUsername(name));
   }, [user]);
 
-  const quotes = [
-    "Small steps done daily become big changes.",
-    "Discipline beats motivation on the days you don’t feel like it.",
-    "Progress, not perfection.",
-    "You don’t have to be fearless—just keep going.",
-    "Consistency is a quiet kind of power.",
-    "Your future self is watching you choose.",
-    "Start where you are. Use what you have. Do what you can.",
-    "Energy follows action.",
-    "Make it simple. Make it clear. Make it happen.",
-    "You are capable of more than you think."
-  ];
-
   const [quoteIndex, setQuoteIndex] = useState(0);
 
-  useEffect(() => {
+  useEffect(() => {//quote generator
     const id = window.setInterval(() => {
-      setQuoteIndex((prev) => (prev + 1) % quotes.length);
+      setQuoteIndex((prev) => (prev + 1) % QUOTES.length);
     }, 6000);
     return () => window.clearInterval(id);
-  }, [quotes.length]);
+  }, []);
 
 
-  const filteredBlogs = blogs;
   const hasNextPage = page * pageSize < total;
 
 
@@ -61,25 +59,12 @@ const { blogs, selectedCategories, page, pageSize, total } = useSelector(
 
   return (
     <div className="app-shell">
-      <div className="topbar">
-        <div className="brand">Inkframe</div>
-        <div className="nav-links">
-          {myUsername ? <span className="meta welcome-text">Welcome, {myUsername}</span> : null}
-          <NavLink className={navClass} to="/">Home</NavLink>
-          <NavLink className={navClass} to="/create">Create Blog</NavLink>
-          {user ? (
-            <NavLink className={navClass} to={`/profile/${user.id}`}>Profile</NavLink>
-          ) : null}
-          {user ? (
-            <NavLink className={navClass} to="/logout">Logout</NavLink>
-          ) : (
-            <>
-              <NavLink className={navClass} to="/register">Register</NavLink>
-              <NavLink className={navClass} to="/login">Login</NavLink>
-            </>
-          )}
-        </div>
-      </div>
+      <Topbar welcomeText={myUsername ? `Welcome, ${myUsername}` : null}>
+        <NavLinkPill to="/">Home</NavLinkPill>
+        <NavLinkPill to="/create">Create Blog</NavLinkPill>
+        {user ? <NavLinkPill to={`/profile/${user.id}`}>Profile</NavLinkPill> : null}
+        <NavLinkPill to="/logout">Logout</NavLinkPill>
+      </Topbar>
 
       <div className="hero">
         <div>
@@ -91,25 +76,49 @@ const { blogs, selectedCategories, page, pageSize, total } = useSelector(
         </div>
         <div className="accent-box">
           <strong>Life starts here</strong>
-          <p>“{quotes[quoteIndex]}”</p>
+          <p>“{QUOTES[quoteIndex]}”</p>
         </div>
       </div>
         
       <div className="toolbar">
-        <button onClick={() => dispatch(clearCategories())}>All</button>
-        <button onClick={() => dispatch(toggleCategory("school"))}>School</button>
-        <button onClick={() => dispatch(toggleCategory("travel"))}>Travel</button>
-        <button onClick={() => dispatch(toggleCategory("food"))}>Food</button>
-        <button onClick={() => dispatch(toggleCategory("others"))}>Others</button>
-
+        <button
+          className={selectedCategories.length === 0 ? "active" : ""}
+          onClick={() => dispatch(clearCategories())}
+        >
+          All
+        </button>
+        <button
+          className={selectedCategories.includes("school") ? "active" : ""}
+          onClick={() => dispatch(toggleCategory("school"))}
+        >
+          School
+        </button>
+        <button
+          className={selectedCategories.includes("travel") ? "active" : ""}
+          onClick={() => dispatch(toggleCategory("travel"))}
+        >
+          Travel
+        </button>
+        <button
+          className={selectedCategories.includes("food") ? "active" : ""}
+          onClick={() => dispatch(toggleCategory("food"))}
+        >
+          Food
+        </button>
+        <button
+          className={selectedCategories.includes("others") ? "active" : ""}
+          onClick={() => dispatch(toggleCategory("others"))}
+        >
+          Others
+        </button>
       </div>
 
       <h2 className="section-title">Latest Posts</h2>
-      {filteredBlogs.length === 0 ? (
+      {blogs.length === 0 ? (
         <p className="notice">No posts yet.</p>
       ) : (
         <div className="grid">
-          {filteredBlogs.map(blog => (
+          {blogs.map(blog => (
             <div className="card card--preview" key={blog.id}>
               {blog.image_url ? (
                 <div>

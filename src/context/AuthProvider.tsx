@@ -11,7 +11,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {let mounted = true;
 
-    supabase.auth.getSession().then(({ data, error }) => {
+    supabase.auth.getSession().then(({ data, error }) => {//checks current log in
       if (!mounted) return;
       if (error) {
         setUser(null);
@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    const { data: authListener } = supabase.auth.onAuthStateChange(//keeps login status updated
       (_event, nextSession) => {
         setSession(nextSession);
         setUser(nextSession?.user ?? null);
@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => { mounted = false;
+      
       authListener.subscription.unsubscribe();
     };
   }, []);
