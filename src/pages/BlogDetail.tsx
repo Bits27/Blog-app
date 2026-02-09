@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import type { Blog } from "../types/blog";
@@ -29,6 +29,7 @@ function BlogDetail() {
   const [commentImage, setCommentImage] = useState<File | null>(null);
   const [commentError, setCommentError] = useState("");
   const [commentUploading, setCommentUploading] = useState(false);
+  const commentImageInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -135,6 +136,9 @@ function BlogDetail() {
 
             setCommentText("");
             setCommentImage(null);
+            if (commentImageInputRef.current) {
+              commentImageInputRef.current.value = "";
+            }
             setCommentUploading(false);
           }}
         >
@@ -153,11 +157,28 @@ function BlogDetail() {
               <input
                 type="file"
                 accept="image/*"
+                ref={commentImageInputRef}
                 onChange={(e) => setCommentImage(e.target.files?.[0] ?? null)}
               />
             </label>
           </div>
-          {commentImage ? <div className="meta">Selected: {commentImage.name}</div> : null}
+          {commentImage ? (
+            <div className="meta">
+              Selected: {commentImage.name}{" "}
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() => {
+                  setCommentImage(null);
+                  if (commentImageInputRef.current) {
+                    commentImageInputRef.current.value = "";
+                  }
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          ) : null}
           {commentError ? <p className="notice">{commentError}</p> : null}
         </form>
 
